@@ -8,6 +8,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
 
 /**
  * @author ishan
@@ -48,6 +49,7 @@ public class UberProgressView extends View {
     private float theta = 0;
 
     AccelerateDecelerateInterpolator accelerateDecelerateInterpolator;
+    DecelerateInterpolator decelerateInterpolator;
 
     public UberProgressView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -74,7 +76,7 @@ public class UberProgressView extends View {
         orbitPathRadius = 4 * rStationary;
 
         accelerateDecelerateInterpolator = new AccelerateDecelerateInterpolator();
-
+        decelerateInterpolator = new DecelerateInterpolator(1.0f);
         animationCalculationsRunnable.run();
     }
 
@@ -95,24 +97,31 @@ public class UberProgressView extends View {
         canvas.drawCircle(cXStationary, cYStationary, rStationary, mPaintStationaryCircle);
         canvas.drawCircle(cXStationary, cYStationary, rStationaryGF, mPaintGrowingFadingCircle);
 
-        rStationaryGF += rStationary * delta;
+        rStationaryGF = rStationary * (4 * decelerateInterpolator.getInterpolation(delta));
+
         int alpha = 100 - (int)(delta * 100);
         mPaintGrowingFadingCircle.setAlpha(alpha);
         theta = (360 * delta) - 90;
 
         drawCircle(canvas, theta, mPaintOrbitingCircle1);
 
-        if (theta > 15) {
-            drawCircle(canvas, theta - 10, mPaintOrbitingCircle2);
+
+        float lagFactor1 = 15 - (delta * 5);
+        float lagFactor2 = 30 - (delta * 10);
+        float lagFactor3 = 45 - (delta * 15);
+
+//        Log.e(TAG, "delta = " + delta + ", theta = " + theta
+//                + ", lf1 = " + lagFactor1
+//                + ", lf2 = " + lagFactor2
+//                + ", lf3 = " + lagFactor3);
+        if (theta > 15 && theta < 350) {
+            drawCircle(canvas, theta - lagFactor1, mPaintOrbitingCircle2);
+
+            drawCircle(canvas, theta - lagFactor2, mPaintOrbitingCircle3);
+
+            drawCircle(canvas, theta - lagFactor3, mPaintOrbitingCircle4);
         }
 
-        if (theta > 25) {
-            drawCircle(canvas, theta - 20, mPaintOrbitingCircle3);
-        }
-
-        if (theta > 35) {
-            drawCircle(canvas, theta - 30, mPaintOrbitingCircle4);
-        }
     }
 
     private void drawCircle(Canvas canvas, float theta, Paint paint) {
@@ -137,7 +146,7 @@ public class UberProgressView extends View {
                     rStationaryGF = 0f;
                 }
                 delta = accelerateDecelerateInterpolator.getInterpolation(delta);
-                postDelayed(this, 50);
+                postDelayed(this, 60);
                 invalidate();
             }
 
