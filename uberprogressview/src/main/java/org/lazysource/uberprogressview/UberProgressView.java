@@ -17,9 +17,6 @@ import android.view.animation.DecelerateInterpolator;
 public class UberProgressView extends View {
 
     private static final String TAG = UberProgressView.class.getSimpleName();
-    private static final String CENTER_CIRCLE_MAIN = "CENTER_CIRCLE_MAIN";
-    private static final String UBER_PROGRESS_VIEW = "UBER_PROGRESS_VIEW";
-
 
     // Stationary Solid Circle Fields
     private float cXStationary;
@@ -105,20 +102,33 @@ public class UberProgressView extends View {
 
         drawCircle(canvas, theta, mPaintOrbitingCircle1);
 
+        float lagFactor1,lagFactor2,lagFactor3;
 
-        float lagFactor1 = 15 - (delta * 5);
-        float lagFactor2 = 30 - (delta * 10);
-        float lagFactor3 = 45 - (delta * 15);
+        if (delta < 0.90) {
+            // LF = K - (delta * (K / 3))
+            lagFactor1 = 15 - (delta * 5);
+            lagFactor2 = 30 - (delta * 10);
+            lagFactor3 = 45 - (delta * 15);
+        } else {
+            // LF = ((4 * K * delta) - (3 * K)) / 2
+            lagFactor1 = ((90 *  delta) - 45) / 16;
+            lagFactor2 = ((120 * delta) - 90) / 16;
+            lagFactor3 = ((180 * delta) - 135) / 16;
+        }
+    // LF = (K * delta) - (K / 2)
+//            lagFactor1 = (30*delta) - 15;
+//            lagFactor2 = (60*delta) - 30;
+//            lagFactor3 = (90*delta) - 45;
 
-//        Log.e(TAG, "delta = " + delta + ", theta = " + theta
-//                + ", lf1 = " + lagFactor1
+        Log.e(TAG, "delta = " + delta + ", theta = " + theta
+                + ", lf1 = " + lagFactor1);
 //                + ", lf2 = " + lagFactor2
 //                + ", lf3 = " + lagFactor3);
-        if (theta > 15 && theta < 350) {
+
+
+        if (theta > 30 && theta <= 360) {
             drawCircle(canvas, theta - lagFactor1, mPaintOrbitingCircle2);
-
             drawCircle(canvas, theta - lagFactor2, mPaintOrbitingCircle3);
-
             drawCircle(canvas, theta - lagFactor3, mPaintOrbitingCircle4);
         }
 
