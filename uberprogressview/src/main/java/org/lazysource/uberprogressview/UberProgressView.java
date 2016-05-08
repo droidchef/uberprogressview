@@ -7,8 +7,8 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.View;
-import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
+import android.view.animation.Interpolator;
 
 /**
  * @author ishan
@@ -17,8 +17,9 @@ import android.view.animation.DecelerateInterpolator;
 public class UberProgressView extends View {
 
     private static final String TAG = UberProgressView.class.getSimpleName();
-    private static final int MAX_FADING_CIRCLE_ALPHA = 60;
+    private static final int MAX_FADING_CIRCLE_ALPHA = 100;
     private static final float TRAILING_FUNCTION_CHANGE_THRESHOLD = 0.90f;
+    private static final int TOTAL_ANIMATION_TIME = 450;
     private float cXStationary;
     private float cYStationary;
 
@@ -40,17 +41,17 @@ public class UberProgressView extends View {
     private int oribitingCircleColor;
 
     // Animation calculation fields
-    private float totalAnimationTime;
     private float currentAnimationTime = 0;
     private float delta = 0;
     private float theta = 0;
 
-    private int fadingCircleAlpha = 100;
+    private int fadingCircleAlpha = 255;
 
     float movementFactor1, movementFactor2, movementFactor3;
 
-    AccelerateDecelerateInterpolator accelerateDecelerateInterpolator;
-    DecelerateInterpolator decelerateInterpolator;
+    private Interpolator interpolator;
+
+    private RefreshViewRunnable refreshViewRunnable;
 
     public UberProgressView(Context context) {
         super(context);
@@ -65,7 +66,6 @@ public class UberProgressView extends View {
     public UberProgressView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(context, attrs);
-        animationCalculationsRunnable.run();
     }
 
     private void init(Context context, AttributeSet attributeSet) {
@@ -90,10 +90,6 @@ public class UberProgressView extends View {
             } else {
                 rOrbiting = orbitingCircleRadius;
             }
-            // This controls the speed of the animation where total animation
-            // time is inversely proportional to the speed of the animation.
-            totalAnimationTime = typedArray.getInteger(R.styleable.UberProgressView_animation_time, 100);
-
         } finally {
             typedArray.recycle();
         }
@@ -110,16 +106,13 @@ public class UberProgressView extends View {
         oribitingCircleColor = Color.parseColor("#29B6F6");
         rStationary = 12f;
         rOrbiting = rStationary / 2;
-        totalAnimationTime = 100;
-
         setupColorPallets();
 
         setupInitialValuesForAnimation();
     }
 
     private void setupInterpolators() {
-        accelerateDecelerateInterpolator = new AccelerateDecelerateInterpolator();
-        decelerateInterpolator = new DecelerateInterpolator(1.0f);
+        interpolator = new DecelerateInterpolator(0.9f);
     }
 
     private void setupInitialValuesForAnimation() {
@@ -166,12 +159,28 @@ public class UberProgressView extends View {
 
         drawCircle(canvas, theta, mPaintOrbitingCircle1);
 
-        if (theta > 30 && theta <= 360) {
+        if (theta > 15 && theta < 270) {
             drawCircle(canvas, theta - movementFactor1, mPaintOrbitingCircle2);
+        }
+        if (theta > 30 && theta < 315) {
             drawCircle(canvas, theta - movementFactor2, mPaintOrbitingCircle3);
+        }
+        if (theta > 45 && theta < 350) {
             drawCircle(canvas, theta - movementFactor3, mPaintOrbitingCircle4);
         }
 
+    }
+
+    @Override
+    protected void onWindowVisibilityChanged(int visibility) {
+        super.onWindowVisibilityChanged(visibility);
+        if (View.GONE == visibility) {
+            removeCallbacks(refreshViewRunnable);
+        } else {
+            removeCallbacks(refreshViewRunnable);
+            refreshViewRunnable = new RefreshViewRunnable();
+            post(refreshViewRunnable);
+        }
     }
 
     private void drawCircle(Canvas canvas, float theta, Paint paint) {
@@ -194,34 +203,38 @@ public class UberProgressView extends View {
         return ((4 * K * delta) - (3 * K)) / 16;
     }
 
-    final Runnable animationCalculationsRunnable = new Runnable() {
+    private class RefreshViewRunnable implements Runnable {
+
         @Override
         public void run() {
 
-            if (currentAnimationTime >= 0) {
-                currentAnimationTime += 5;
-                delta = accelerateDecelerateInterpolator.getInterpolation(currentAnimationTime/totalAnimationTime);
-                rStationaryGF = rStationary * (4 * decelerateInterpolator.getInterpolation(delta));
-                if (delta >= 1.0) {
-                    currentAnimationTime = 0;
-                    rStationaryGF = 0f;
+            synchronized (UberProgressView.this) {
+
+                if (currentAnimationTime >= 0) {
+                    currentAnimationTime += 5;
+                    delta = currentAnimationTime/TOTAL_ANIMATION_TIME;
+                    rStationaryGF = rStationary * 4 * delta;
+                    if (delta >= 1.0) {
+                        currentAnimationTime = 0;
+                        rStationaryGF = 0f;
+                    }
+                    fadingCircleAlpha = MAX_FADING_CIRCLE_ALPHA - (int)(delta * MAX_FADING_CIRCLE_ALPHA);
+                    theta = (360 * delta) - 90;
+                    if (delta < TRAILING_FUNCTION_CHANGE_THRESHOLD) {
+                        movementFactor1 = getLagFactor(15);
+                        movementFactor2 = getLagFactor(30);
+                        movementFactor3 = getLagFactor(45);
+                    } else {
+                        movementFactor1 = getTrailFactor(15);
+                        movementFactor2 = getTrailFactor(30);
+                        movementFactor3 = getTrailFactor(45);
+                    }
+                    invalidate();
+                    postDelayed(this, 16);
                 }
-                fadingCircleAlpha = MAX_FADING_CIRCLE_ALPHA - (int)(delta * MAX_FADING_CIRCLE_ALPHA);
-                theta = (360 * delta) - 90;
-                if (delta < TRAILING_FUNCTION_CHANGE_THRESHOLD) {
-                    movementFactor1 = getLagFactor(15);
-                    movementFactor2 = getLagFactor(30);
-                    movementFactor3 = getLagFactor(45);
-                } else {
-                    movementFactor1 = getTrailFactor(15);
-                    movementFactor2 = getTrailFactor(30);
-                    movementFactor3 = getTrailFactor(45);
-                }
-                postDelayed(this, 60);
-                invalidate();
+
             }
 
         }
-    };
-
+    }
 }
