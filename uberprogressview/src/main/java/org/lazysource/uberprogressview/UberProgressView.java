@@ -1,11 +1,11 @@
 package org.lazysource.uberprogressview;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
@@ -17,64 +17,132 @@ import android.view.animation.DecelerateInterpolator;
 public class UberProgressView extends View {
 
     private static final String TAG = UberProgressView.class.getSimpleName();
-
-    // Stationary Solid Circle Fields
+    private static final int MAX_FADING_CIRCLE_ALPHA = 60;
+    private static final float TRAILING_FUNCTION_CHANGE_THRESHOLD = 0.90f;
     private float cXStationary;
     private float cYStationary;
+
     private float rStationary;
-    private final Paint mPaintStationaryCircle;
-
-    // Stationary Growing-Fading Circle Fields
-    private float rStationaryGF;
-    private Paint mPaintGrowingFadingCircle;
-
-    // Orbiting Solid Circle Fields
-    private float cXOrbiting;
-    private float cYOrbiting;
+    private float rStationaryGF = 0f;
     private float rOrbiting;
-    private float orbitPathRadius;
-    private final Paint mPaintOrbitingCircle1;
-    private final Paint mPaintOrbitingCircle2;
-    private final Paint mPaintOrbitingCircle3;
-    private final Paint mPaintOrbitingCircle4;
 
+    private float orbitPathDistanceFromCenter;
+
+    private final Paint mPaintStationaryCircle = new Paint();
+    private Paint mPaintGrowingFadingCircle = new Paint();
+    private final Paint mPaintOrbitingCircle1 = new Paint();
+    private final Paint mPaintOrbitingCircle2 = new Paint();
+    private final Paint mPaintOrbitingCircle3 = new Paint();
+    private final Paint mPaintOrbitingCircle4 = new Paint();
+
+    private int stationaryCircleColor;
+    private int fadingCircleColor;
+    private int oribitingCircleColor;
 
     // Animation calculation fields
-    private final float totalAnimationTime = 100;
+    private float totalAnimationTime;
     private float currentAnimationTime = 0;
     private float delta = 0;
     private float theta = 0;
 
+    private int fadingCircleAlpha = 100;
+
+    float movementFactor1, movementFactor2, movementFactor3;
+
     AccelerateDecelerateInterpolator accelerateDecelerateInterpolator;
     DecelerateInterpolator decelerateInterpolator;
 
+    public UberProgressView(Context context) {
+        super(context);
+        init();
+    }
+
+    public UberProgressView(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        init(context, attrs);
+    }
+
     public UberProgressView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        this.mPaintStationaryCircle = new Paint();
-        this.mPaintStationaryCircle.setColor(Color.parseColor("#29B6F6"));
-        this.mPaintGrowingFadingCircle = new Paint();
-        this.mPaintGrowingFadingCircle.setColor(Color.parseColor("#29B6F6"));
-        this.mPaintOrbitingCircle1 = new Paint();
-        this.mPaintOrbitingCircle1.setColor(Color.parseColor("#29B6F6"));
-        this.mPaintOrbitingCircle2 = new Paint();
-        this.mPaintOrbitingCircle2.setColor(Color.parseColor("#29B6F6"));
-        this.mPaintOrbitingCircle2.setAlpha(191);
-        this.mPaintOrbitingCircle3 = new Paint();
-        this.mPaintOrbitingCircle3.setColor(Color.parseColor("#29B6F6"));
-        this.mPaintOrbitingCircle3.setAlpha(127);
-        this.mPaintOrbitingCircle4 = new Paint();
-        this.mPaintOrbitingCircle4.setColor(Color.parseColor("#29B6F6"));
-        this.mPaintOrbitingCircle4.setAlpha(64);
+        init(context, attrs);
+        animationCalculationsRunnable.run();
+    }
 
+    private void init(Context context, AttributeSet attributeSet) {
 
+        final TypedArray typedArray = context.getTheme().obtainStyledAttributes(
+                attributeSet,
+                R.styleable.UberProgressView,
+                0, 0
+        );
+
+        try {
+
+            stationaryCircleColor = typedArray.getColor(R.styleable.UberProgressView_stationary_circle_color, Color.parseColor("#29B6F6"));
+            fadingCircleColor = typedArray.getColor(R.styleable.UberProgressView_fading_circle_color, Color.parseColor("#29B6F6"));
+            oribitingCircleColor = typedArray.getColor(R.styleable.UberProgressView_orbiting_circle_color, Color.parseColor("#29B6F6"));
+            rStationary = typedArray.getDimension(R.styleable.UberProgressView_stationary_circle_radius, 12f);
+            float orbitingCircleRadius = typedArray.getDimension(R.styleable.UberProgressView_orbiting_circle_radius, 6f);
+            // In order to make sure the orbiting circles are at least 75% the
+            // size of the stationary circle this check is in place.
+            if (orbitingCircleRadius > (rStationary / 3)) {
+                rOrbiting = rStationary / 2;
+            } else {
+                rOrbiting = orbitingCircleRadius;
+            }
+            // This controls the speed of the animation where total animation
+            // time is inversely proportional to the speed of the animation.
+            totalAnimationTime = typedArray.getInteger(R.styleable.UberProgressView_animation_time, 100);
+
+        } finally {
+            typedArray.recycle();
+        }
+
+        setupColorPallets();
+
+        setupInitialValuesForAnimation();
+    }
+
+    private void init() {
+
+        stationaryCircleColor = Color.parseColor("#29B6F6");
+        fadingCircleColor = Color.parseColor("#29B6F6");
+        oribitingCircleColor = Color.parseColor("#29B6F6");
         rStationary = 12f;
-        rStationaryGF = 0f;
         rOrbiting = rStationary / 2;
-        orbitPathRadius = 4 * rStationary;
+        totalAnimationTime = 100;
 
+        setupColorPallets();
+
+        setupInitialValuesForAnimation();
+    }
+
+    private void setupInterpolators() {
         accelerateDecelerateInterpolator = new AccelerateDecelerateInterpolator();
         decelerateInterpolator = new DecelerateInterpolator(1.0f);
-        animationCalculationsRunnable.run();
+    }
+
+    private void setupInitialValuesForAnimation() {
+        orbitPathDistanceFromCenter = 4 * rStationary;
+        setupInterpolators();
+    }
+
+    private void setupColorPallets() {
+        mPaintGrowingFadingCircle.setColor(fadingCircleColor);
+        mPaintGrowingFadingCircle.setAntiAlias(true);
+        mPaintStationaryCircle.setColor(stationaryCircleColor);
+        mPaintStationaryCircle.setAntiAlias(true);
+        mPaintOrbitingCircle1.setColor(oribitingCircleColor);
+        mPaintOrbitingCircle1.setAntiAlias(true);
+        mPaintOrbitingCircle2.setColor(oribitingCircleColor);
+        mPaintOrbitingCircle2.setAlpha(191);
+        mPaintOrbitingCircle2.setAntiAlias(true);
+        mPaintOrbitingCircle3.setColor(oribitingCircleColor);
+        mPaintOrbitingCircle3.setAlpha(127);
+        mPaintOrbitingCircle3.setAntiAlias(true);
+        mPaintOrbitingCircle4.setColor(oribitingCircleColor);
+        mPaintOrbitingCircle4.setAlpha(64);
+        mPaintOrbitingCircle4.setAntiAlias(true);
     }
 
     @Override
@@ -82,54 +150,28 @@ public class UberProgressView extends View {
         super.onSizeChanged(w, h, oldw, oldh);
         cXStationary = w / 2;
         cYStationary = h / 2;
-
-        cXOrbiting = cXStationary;
-        cYOrbiting = cYStationary - (orbitPathRadius);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
+        // This draws the stationary circle in the center of the view.
         canvas.drawCircle(cXStationary, cYStationary, rStationary, mPaintStationaryCircle);
+
+        // This is the lighter circle that grows bigger in size over time and fades away.
         canvas.drawCircle(cXStationary, cYStationary, rStationaryGF, mPaintGrowingFadingCircle);
 
         rStationaryGF = rStationary * (4 * decelerateInterpolator.getInterpolation(delta));
 
-        int alpha = 100 - (int)(delta * 100);
-        mPaintGrowingFadingCircle.setAlpha(alpha);
-        theta = (360 * delta) - 90;
+        mPaintGrowingFadingCircle.setAlpha(fadingCircleAlpha);
 
         drawCircle(canvas, theta, mPaintOrbitingCircle1);
 
-        float lagFactor1,lagFactor2,lagFactor3;
-
-        if (delta < 0.90) {
-            // LF = K - (delta * (K / 3))
-            lagFactor1 = 15 - (delta * 5);
-            lagFactor2 = 30 - (delta * 10);
-            lagFactor3 = 45 - (delta * 15);
-        } else {
-            // LF = ((4 * K * delta) - (3 * K)) / 2
-            lagFactor1 = ((90 *  delta) - 45) / 16;
-            lagFactor2 = ((120 * delta) - 90) / 16;
-            lagFactor3 = ((180 * delta) - 135) / 16;
-        }
-    // LF = (K * delta) - (K / 2)
-//            lagFactor1 = (30*delta) - 15;
-//            lagFactor2 = (60*delta) - 30;
-//            lagFactor3 = (90*delta) - 45;
-
-        Log.e(TAG, "delta = " + delta + ", theta = " + theta
-                + ", lf1 = " + lagFactor1);
-//                + ", lf2 = " + lagFactor2
-//                + ", lf3 = " + lagFactor3);
-
-
         if (theta > 30 && theta <= 360) {
-            drawCircle(canvas, theta - lagFactor1, mPaintOrbitingCircle2);
-            drawCircle(canvas, theta - lagFactor2, mPaintOrbitingCircle3);
-            drawCircle(canvas, theta - lagFactor3, mPaintOrbitingCircle4);
+            drawCircle(canvas, theta - movementFactor1, mPaintOrbitingCircle2);
+            drawCircle(canvas, theta - movementFactor2, mPaintOrbitingCircle3);
+            drawCircle(canvas, theta - movementFactor3, mPaintOrbitingCircle4);
         }
 
     }
@@ -138,10 +180,20 @@ public class UberProgressView extends View {
 
         double thetaInRadians = Math.toRadians(theta);
 
-        float oribitingCX = cXStationary + (orbitPathRadius * (float) Math.cos(thetaInRadians));
-        float oribitingCY = cYStationary + (orbitPathRadius * (float) Math.sin(thetaInRadians));
+        float oribitingCX = cXStationary + (orbitPathDistanceFromCenter * (float) Math.cos(thetaInRadians));
+        float oribitingCY = cYStationary + (orbitPathDistanceFromCenter * (float) Math.sin(thetaInRadians));
 
         canvas.drawCircle(oribitingCX, oribitingCY, rOrbiting, paint);
+    }
+
+    private float getLagFactor(float K) {
+        // LF = K - (delta * (K / 3))
+        return (K - (delta * ( K / 3)));
+    }
+
+    private float getTrailFactor(float K) {
+        // LF = ((4 * K * delta) - (3 * K)) / 2
+        return ((4 * K * delta) - (3 * K)) / 16;
     }
 
     final Runnable animationCalculationsRunnable = new Runnable() {
@@ -156,6 +208,17 @@ public class UberProgressView extends View {
                     rStationaryGF = 0f;
                 }
                 delta = accelerateDecelerateInterpolator.getInterpolation(delta);
+                fadingCircleAlpha = MAX_FADING_CIRCLE_ALPHA - (int)(delta * MAX_FADING_CIRCLE_ALPHA);
+                theta = (360 * delta) - 90;
+                if (delta < TRAILING_FUNCTION_CHANGE_THRESHOLD) {
+                    movementFactor1 = getLagFactor(15);
+                    movementFactor2 = getLagFactor(30);
+                    movementFactor3 = getLagFactor(45);
+                } else {
+                    movementFactor1 = getTrailFactor(15);
+                    movementFactor2 = getTrailFactor(30);
+                    movementFactor3 = getTrailFactor(45);
+                }
                 postDelayed(this, 60);
                 invalidate();
             }
@@ -163,11 +226,4 @@ public class UberProgressView extends View {
         }
     };
 
-    private static void printCoordinates(String coordinatesOf, float x, float y){
-        Log.e(TAG, coordinatesOf + "(" + x + "," + y + ")");
-    }
-
-    private static void printSize(String sizeOf, int width, int height){
-        Log.e(TAG, sizeOf + "(width = " + width + ", height = " + height + ")");
-    }
 }

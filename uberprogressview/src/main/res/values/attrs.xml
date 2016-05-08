@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="UberProgressView">
+        <attr name="stationary_circle_radius" format="dimension" />
+        <attr name="orbiting_circle_radius" format="dimension" />
+        <attr name="stationary_circle_color" format="color" />
+        <attr name="fading_circle_color" format="color" />
+        <attr name="orbiting_circle_color" format="color" />
+        <attr name="animation_time" format="integer" />
+    </declare-styleable>
+
+</resources>
