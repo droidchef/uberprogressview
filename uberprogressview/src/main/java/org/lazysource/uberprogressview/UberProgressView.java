@@ -49,8 +49,6 @@ public class UberProgressView extends View {
 
     float movementFactor1, movementFactor2, movementFactor3;
 
-    private Interpolator interpolator;
-
     private RefreshViewRunnable refreshViewRunnable;
 
     public UberProgressView(Context context) {
@@ -111,13 +109,8 @@ public class UberProgressView extends View {
         setupInitialValuesForAnimation();
     }
 
-    private void setupInterpolators() {
-        interpolator = new DecelerateInterpolator(0.9f);
-    }
-
     private void setupInitialValuesForAnimation() {
         orbitPathDistanceFromCenter = 4 * rStationary;
-        setupInterpolators();
     }
 
     private void setupColorPallets() {
