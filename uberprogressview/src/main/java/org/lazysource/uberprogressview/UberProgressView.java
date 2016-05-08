@@ -162,8 +162,6 @@ public class UberProgressView extends View {
         // This is the lighter circle that grows bigger in size over time and fades away.
         canvas.drawCircle(cXStationary, cYStationary, rStationaryGF, mPaintGrowingFadingCircle);
 
-        rStationaryGF = rStationary * (4 * decelerateInterpolator.getInterpolation(delta));
-
         mPaintGrowingFadingCircle.setAlpha(fadingCircleAlpha);
 
         drawCircle(canvas, theta, mPaintOrbitingCircle1);
@@ -202,12 +200,12 @@ public class UberProgressView extends View {
 
             if (currentAnimationTime >= 0) {
                 currentAnimationTime += 5;
-                delta = currentAnimationTime / totalAnimationTime;
+                delta = accelerateDecelerateInterpolator.getInterpolation(currentAnimationTime/totalAnimationTime);
+                rStationaryGF = rStationary * (4 * decelerateInterpolator.getInterpolation(delta));
                 if (delta >= 1.0) {
                     currentAnimationTime = 0;
                     rStationaryGF = 0f;
                 }
-                delta = accelerateDecelerateInterpolator.getInterpolation(delta);
                 fadingCircleAlpha = MAX_FADING_CIRCLE_ALPHA - (int)(delta * MAX_FADING_CIRCLE_ALPHA);
                 theta = (360 * delta) - 90;
                 if (delta < TRAILING_FUNCTION_CHANGE_THRESHOLD) {
