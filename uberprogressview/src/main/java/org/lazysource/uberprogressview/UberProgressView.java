@@ -37,6 +37,7 @@ public class UberProgressView extends View {
     private int stationaryCircleColor;
     private int fadingCircleColor;
     private int oribitingCircleColor;
+    private int roationDirection;
 
     // Animation calculation fields
     private float currentAnimationTime = 0;
@@ -77,6 +78,7 @@ public class UberProgressView extends View {
             stationaryCircleColor = typedArray.getColor(R.styleable.UberProgressView_stationary_circle_color, Color.parseColor("#29B6F6"));
             fadingCircleColor = typedArray.getColor(R.styleable.UberProgressView_fading_circle_color, Color.parseColor("#29B6F6"));
             oribitingCircleColor = typedArray.getColor(R.styleable.UberProgressView_orbiting_circle_color, Color.parseColor("#29B6F6"));
+            roationDirection = typedArray.getInt(R.styleable.UberProgressView_direction, 0);
             rStationary = typedArray.getDimension(R.styleable.UberProgressView_stationary_circle_radius, 12f);
             float orbitingCircleRadius = typedArray.getDimension(R.styleable.UberProgressView_orbiting_circle_radius, 6f);
             // In order to make sure the orbiting circles are at least 75% the
@@ -150,6 +152,7 @@ public class UberProgressView extends View {
 
         drawCircle(canvas, theta, mPaintOrbitingCircle1);
 
+
         if (theta > 15 && theta < 270) {
             drawCircle(canvas, theta - movementFactor1, mPaintOrbitingCircle2);
         }
@@ -177,11 +180,18 @@ public class UberProgressView extends View {
     private void drawCircle(Canvas canvas, float theta, Paint paint) {
 
         double thetaInRadians = Math.toRadians(theta);
+        float oribitingCX, oribitingCY;
 
-        float oribitingCX = cXStationary + (orbitPathDistanceFromCenter * (float) Math.cos(thetaInRadians));
-        float oribitingCY = cYStationary + (orbitPathDistanceFromCenter * (float) Math.sin(thetaInRadians));
+        if (roationDirection == 0) {
+            oribitingCX = cXStationary + (orbitPathDistanceFromCenter * (float) Math.cos(thetaInRadians));
+            oribitingCY = cYStationary + (orbitPathDistanceFromCenter * (float) Math.sin(thetaInRadians));
+        } else {
+            oribitingCX = cXStationary + (orbitPathDistanceFromCenter * (float) Math.sin(thetaInRadians));
+            oribitingCY = cYStationary + (orbitPathDistanceFromCenter * (float) Math.cos(thetaInRadians));
+        }
 
         canvas.drawCircle(oribitingCX, oribitingCY, rOrbiting, paint);
+
     }
 
     private float getLagFactor(float K) {

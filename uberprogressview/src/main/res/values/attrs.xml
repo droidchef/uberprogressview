@@ -8,6 +8,10 @@
         <attr name="fading_circle_color" format="color" />
         <attr name="orbiting_circle_color" format="color" />
         <attr name="animation_time" format="integer" />
+        <attr name="direction" format="enum">
+            <enum name="clockwise" value="0"/>
+            <enum name="counterclockwise" value="1"/>
+        </attr>
     </declare-styleable>
 
 </resources>
