@@ -1,4 +1,5 @@
 # UberProgressView
+[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-UberProgressView-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/3567)
 
 A simple progress animation developed after taking inspiration from the Uber app.
 
