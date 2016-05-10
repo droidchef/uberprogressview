@@ -26,7 +26,7 @@ dependencies {
 
 # Usage
 
-In your Layout XML add this
+In your Layout XML add this (all the app:.... attributes are optional and have default values
 
 ```
     <org.lazysource.uberprogressview.UberProgressView
@@ -35,6 +35,7 @@ In your Layout XML add this
         app:fading_circle_color="@android:color/holo_red_dark"
         app:stationary_circle_color="@android:color/holo_red_dark"
         app:orbiting_circle_color="@android:color/holo_red_dark"
+        app:direction="counterclockwise"
         app:orbiting_circle_radius="6dp"
         app:stationary_circle_radius="12dp" />
 
@@ -47,6 +48,7 @@ In your Layout XML add this
 | stationary_circle_color | Color of the stationary circle in the center.            | color     | #29B6F6   |
 | orbiting_circle_radius  | Radius of the orbiting circles.                          | dimension | 2dp       |
 | stationary_circle_radius| Radius of the stationary circle in the center.           | dimension | 4dp       |
+| direction               | Direction of rotation of outer dot                       | enum      | clockwise |
 
 
 # Design Inspiration
