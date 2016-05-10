@@ -20,7 +20,7 @@ allprojects {
 Add this to your app module's `build.gradle` file
 ```
 dependencies {
-	        compile 'com.github.lazysource:uberprogressview:1.0.0'
+	        compile 'com.github.lazysource:uberprogressview:1.1.0'
 	}
 ```
 
