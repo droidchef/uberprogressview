@@ -4,7 +4,7 @@
 A simple progress animation developed after taking inspiration from the Uber app.
 
 # Demo
-![UberProgressView Demo](https://raw.githubusercontent.com/lazysource/uberprogressview/master/UberProgressViewDemo.gif)
+![UberProgressView Demo](https://raw.githubusercontent.com/ishan1604/uberprogressview/master/UberProgressViewDemo.gif)
 
 # Download
 
@@ -20,7 +20,7 @@ allprojects {
 Add this to your app module's `build.gradle` file
 ```
 dependencies {
-	        compile 'com.github.lazysource:uberprogressview:1.1.0'
+	        compile 'com.github.ishan1604:uberprogressview:1.1.0'
 	}
 ```
 
