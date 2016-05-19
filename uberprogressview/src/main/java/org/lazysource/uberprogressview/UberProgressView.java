@@ -15,6 +15,7 @@ import android.view.View;
 public class UberProgressView extends View {
 
     private static final String TAG = UberProgressView.class.getSimpleName();
+    private static final String CIRCLE_COLOR = "#29B6F6";
     private static final int MAX_FADING_CIRCLE_ALPHA = 100;
     private static final float TRAILING_FUNCTION_CHANGE_THRESHOLD = 0.90f;
     private static final int TOTAL_ANIMATION_TIME = 450;
@@ -22,13 +23,13 @@ public class UberProgressView extends View {
     private float cYStationary;
 
     private float rStationary;
-    private float rStationaryGF = 0f;
+    private float rStationaryGF;
     private float rOrbiting;
 
     private float orbitPathDistanceFromCenter;
 
     private final Paint mPaintStationaryCircle = new Paint();
-    private Paint mPaintGrowingFadingCircle = new Paint();
+    private final Paint mPaintGrowingFadingCircle = new Paint();
     private final Paint mPaintOrbitingCircle1 = new Paint();
     private final Paint mPaintOrbitingCircle2 = new Paint();
     private final Paint mPaintOrbitingCircle3 = new Paint();
@@ -40,13 +41,13 @@ public class UberProgressView extends View {
     private int roationDirection;
 
     // Animation calculation fields
-    private float currentAnimationTime = 0;
-    private float delta = 0;
-    private float theta = 0;
+    private float currentAnimationTime;
+    private float delta;
+    private float theta;
 
     private int fadingCircleAlpha = 255;
 
-    float movementFactor1, movementFactor2, movementFactor3;
+    private float movementFactor1, movementFactor2, movementFactor3;
 
     private RefreshViewRunnable refreshViewRunnable;
 
@@ -75,9 +76,9 @@ public class UberProgressView extends View {
 
         try {
 
-            stationaryCircleColor = typedArray.getColor(R.styleable.UberProgressView_stationary_circle_color, Color.parseColor("#29B6F6"));
-            fadingCircleColor = typedArray.getColor(R.styleable.UberProgressView_fading_circle_color, Color.parseColor("#29B6F6"));
-            oribitingCircleColor = typedArray.getColor(R.styleable.UberProgressView_orbiting_circle_color, Color.parseColor("#29B6F6"));
+            stationaryCircleColor = typedArray.getColor(R.styleable.UberProgressView_stationary_circle_color, Color.parseColor(CIRCLE_COLOR));
+            fadingCircleColor = typedArray.getColor(R.styleable.UberProgressView_fading_circle_color, Color.parseColor(CIRCLE_COLOR));
+            oribitingCircleColor = typedArray.getColor(R.styleable.UberProgressView_orbiting_circle_color, Color.parseColor(CIRCLE_COLOR));
             roationDirection = typedArray.getInt(R.styleable.UberProgressView_direction, 0);
             rStationary = typedArray.getDimension(R.styleable.UberProgressView_stationary_circle_radius, 12f);
             float orbitingCircleRadius = typedArray.getDimension(R.styleable.UberProgressView_orbiting_circle_radius, 6f);
@@ -99,9 +100,9 @@ public class UberProgressView extends View {
 
     private void init() {
 
-        stationaryCircleColor = Color.parseColor("#29B6F6");
-        fadingCircleColor = Color.parseColor("#29B6F6");
-        oribitingCircleColor = Color.parseColor("#29B6F6");
+        stationaryCircleColor = Color.parseColor(CIRCLE_COLOR);
+        fadingCircleColor = Color.parseColor(CIRCLE_COLOR);
+        oribitingCircleColor = Color.parseColor(CIRCLE_COLOR);
         rStationary = 12f;
         rOrbiting = rStationary / 2;
         setupColorPallets();
