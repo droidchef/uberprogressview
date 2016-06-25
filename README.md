@@ -29,7 +29,7 @@ dependencies {
 In your Layout XML add this (all the app:.... attributes are optional and have default values
 
 ```
-    <org.lazysource.uberprogressview.UberProgressView
+    <in.ishankhanna.UberProgressView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:fading_circle_color="@android:color/holo_red_dark"
