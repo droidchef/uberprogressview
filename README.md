@@ -1,10 +1,12 @@
-# UberProgressView
-[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-UberProgressView-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/3567)
+![UberProgressView Demo](https://raw.githubusercontent.com/ishan1604/uberprogressview/master/branding/UberProgressView-Branding.png)
 
 A simple progress animation developed after taking inspiration from the Uber app.
 
+[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-UberProgressView-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/3567)
+
+
 # Demo
-![UberProgressView Demo](https://raw.githubusercontent.com/ishan1604/uberprogressview/master/UberProgressViewDemo.gif)
+![UberProgressView Demo](https://raw.githubusercontent.com/ishan1604/uberprogressview/master/branding/UberProgressViewDemo.gif)
 
 # Download
 
